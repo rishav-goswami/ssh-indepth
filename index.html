@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SSH Developer Notebook</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#121936; --ink:#ecf2ff; --muted:#a9b7d9; --accent:#7ee787; --accent2:#80c8ff; --warn:#ffb86b; --danger:#ff6b6b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b1020,#0a0f1a);color:var(--ink);font-family:var(--sans);}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{position:sticky;top:0;background:rgba(11,16,32,.8);backdrop-filter:blur(6px);z-index:9;border-bottom:1px solid #1a234d}
+    .title{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;padding:14px 0}
+    .title .dot{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #8dffb0, #27ae60)}
+    .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:16px 0}
+    .toc a{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--card);border:1px solid #1d2859;border-radius:12px;color:var(--ink);text-decoration:none}
+    .toc a:hover{outline:2px solid #25337a}
+    h2{margin:26px 0 10px;font-size:22px}
+    h3{margin:18px 0 8px;font-size:18px;color:var(--accent2)}
+    p{color:var(--muted);line-height:1.6}
+    .card{background:var(--card);border:1px solid #1d2859;border-radius:16px;padding:16px;margin:14px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#1d2859;border:1px solid #2c3b84;color:#b4c8ff;font-size:12px}
+    .kbd{font-family:var(--mono);background:#0b122b;border:1px solid #273169;padding:0 6px;border-radius:6px}
+    pre{margin:10px 0;background:#0b122b;border:1px solid #273169;border-radius:12px;padding:12px;overflow:auto;color:#e6f3ff}
+    code{font-family:var(--mono)}
+    .note{border-left:4px solid var(--accent);padding:10px 12px;background:#0e1a34;border-radius:8px}
+    .warn{border-left:4px solid var(--warn);}
+    .ok{border-left:4px solid var(--accent)}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{border:1px solid #24306b;padding:8px 10px}
+    .table th{background:#162152;text-align:left}
+    .pill{padding:2px 8px;border-radius:999px;border:1px solid #2a8f5d;background:#0d2a1e;color:#9af0c3;font-size:12px}
+    .diagram{background:#0b122b;border:1px dashed #355; border-radius:12px;padding:10px}
+    footer{opacity:.7;font-size:12px;margin:40px 0;text-align:center}
+  </style>
+  <!-- Mermaid for diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad:true, theme: 'dark' });</script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title"><span class="dot"></span> SSH Developer Notebook — Practical, Colorful, Human‑Readable</div>
+      <div class="toc">
+        <a href="#basics">🧭 SSH Basics</a>
+        <a href="#auth">🔑 Keys & Auth</a>
+        <a href="#config">⚙️ ~/.ssh/config</a>
+        <a href="#tunnels">🌐 Tunneling (-L / -R / -D)</a>
+        <a href="#flutter">🕊️ Flutter Remote Dev</a>
+        <a href="#mongodb">🍃 MongoDB via SSH</a>
+        <a href="#rdbms">🗄️ RDBMS (Postgres/MySQL)</a>
+        <a href="#adb">🤖 ADB over Network + Tunnels</a>
+        <a href="#files">📦 File Transfer (scp/rsync/sftp)</a>
+        <a href="#tips">🧠 Pro Tips</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section id="basics" class="card">
+      <h2>🧭 SSH Basics</h2>
+      <p>SSH gives you a secure shell on a remote machine. Think: encrypted pipe ⟶ run commands, tunnel ports, copy files.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Connect</h3>
+          <pre><code># Linux / macOS / Windows PowerShell (OpenSSH)
+ssh user@HOST
+ssh -p 2222 user@HOST       # non‑default port
+ssh -i ~/.ssh/id_ed25519 user@HOST   # specify key</code></pre>
+          <p class="note">Use <span class="kbd">-v</span> / <span class="kbd">-vvv</span> for verbose debug when things fail.</p>
+        </div>
+        <div class="card">
+          <h3>Run one command & exit</h3>
+          <pre><code>ssh user@HOST "uptime && whoami && uname -a"</code></pre>
+          <h3>Keep connection alive</h3>
+          <pre><code>ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=3 user@HOST</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="auth" class="card">
+      <h2>🔑 Keys & Authentication</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Generate keys</h3>
+          <pre><code># Strong modern key (recommended)
+ssh-keygen -t ed25519 -C "you@example.com"
+# Legacy compatible
+ssh-keygen -t rsa -b 4096 -C "you@example.com"</code></pre>
+          <p>Add your public key (<code>~/.ssh/id_*.pub</code>) to the server's <code>~/.ssh/authorized_keys</code>.</p>
+        </div>
+        <div class="card">
+          <h3>ssh-agent (single sign‑on)</h3>
+          <pre><code># start agent & add key (Linux/macOS)
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+# Windows PowerShell (OpenSSH Agent)
+Start-Service ssh-agent
+Get-Service ssh-agent | Set-Service -StartupType Automatic
+ssh-add $env:USERPROFILE\.ssh\id_ed25519</code></pre>
+        </div>
+        <div class="card">
+          <h3>Copy key to server</h3>
+          <pre><code>ssh-copy-id user@HOST
+# If nonstandard port
+ssh-copy-id -p 2222 user@HOST</code></pre>
+          <p class="note ok"><strong>Tip:</strong> Disable password auth on servers after keys work: edit <code>/etc/ssh/sshd_config</code> → <code>PasswordAuthentication no</code>, then <code>sudo systemctl restart ssh</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="config" class="card">
+      <h2>⚙️ Convenience with <code>~/.ssh/config</code></h2>
+      <pre><code>Host prod
+  HostName example.com
+  User ubuntu
+  Port 22
+  IdentityFile ~/.ssh/id_ed25519
+  ServerAliveInterval 30
+  ServerAliveCountMax 3
+
+Host jump
+  HostName jump.company.net
+  User dev
+
+# Use jump host to reach a private box
+Host api-internal
+  HostName 10.0.1.15
+  User ubuntu
+  ProxyJump jump
+</code></pre>
+      <p>After this, just run <span class="kbd">ssh prod</span> or <span class="kbd">ssh api-internal</span>.</p>
+    </section>
+
+    <section id="tunnels" class="card">
+      <h2>🌐 Tunneling & Port Forwarding</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Local Forward (<code>-L</code>) — bring remote → local</h3>
+          <pre><code># syntax: ssh -L LOCAL:TARGET_HOST:TARGET_PORT user@SSH_HOST
+# Example: open remote web 80 on your localhost:8080
+ssh -L 8080:localhost:80 user@SSH_HOST</code></pre>
+        </div>
+        <div class="card">
+          <h3>Remote Forward (<code>-R</code>) — expose your local → remote</h3>
+          <pre><code># syntax: ssh -R REMOTE:TARGET_HOST:TARGET_PORT user@SSH_HOST
+# Example: show your local 3000 to the server on 9000
+ssh -R 9000:localhost:3000 user@SSH_HOST</code></pre>
+        </div>
+        <div class="card">
+          <h3>Dynamic (<code>-D</code>) — SOCKS proxy (mini‑VPN)</h3>
+          <pre><code># open a local SOCKS5 proxy at localhost:1080
+ssh -D 1080 user@SSH_HOST
+# point your browser to SOCKS5 localhost:1080</code></pre>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <div class="badge">Flow diagrams (Mermaid)</div>
+        <pre class="mermaid">graph LR
+  A[You (localhost)] -- -L 8080:localhost:80 --> S[SSH Host]
+  S -- connects to --> W[(Remote Service :80)]
+  A <-- browse http://localhost:8080 --> A
+        </pre>
+        <pre class="mermaid">graph LR
+  A[You (localhost)] -- -R 9000:localhost:3000 --> S[SSH Host]
+  S -- listens on :9000 --> S
+  S -- forwards to --> A2[(Your Local :3000)]
+        </pre>
+        <pre class="mermaid">graph LR
+  A[You] -- -D 1080 --> S[SSH Host]
+  B[(Any site)] -- via SOCKS proxy --> S --> B
+        </pre>
+      </div>
+
+      <p class="note warn"><strong>Security:</strong> Prefer tunneling over exposing DBs/IDEs directly to the internet. Restrict binds to <code>localhost</code> unless you truly need others to access.</p>
+    </section>
+
+    <section id="flutter" class="card">
+      <h2>🕊️ Flutter Remote Development</h2>
+      <p>Goal: edit/build on a remote Linux box while testing in your local browser/device.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Remote code, local browser</h3>
+          <pre><code># On the server (inside tmux recommended)
+flutter run -d web-server --web-port 8081 --web-hostname 127.0.0.1
+
+# From your laptop: tunnel that port
+ssh -L 8081:localhost:8081 user@SERVER
+
+# Open locally
+http://localhost:8081</code></pre>
+          <p>Works great for Flutter web; for Android/iOS, see ADB chapter below.</p>
+        </div>
+        <div class="card">
+          <h3>VS Code Remote + Hot Reload</h3>
+          <p>Use <span class="pill">VS Code Remote‑SSH</span> to open the server folder, run Flutter commands in an integrated terminal (inside <code>tmux</code>), and forward ports as needed.</p>
+          <pre><code># Forward common dev ports
+ssh -L 8081:localhost:8081 -L 9100:localhost:9100 user@SERVER</code></pre>
+        </div>
+      </div>
+      <p class="note">If you need a device (camera, sensors, push notifications), use the ADB network approach to let the server see your phone, or simply build remotely and install/run locally.</p>
+    </section>
+
+    <section id="mongodb" class="card">
+      <h2>🍃 MongoDB via SSH (safe by default)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Local forward to a remote MongoDB</h3>
+          <pre><code># Do NOT expose 27017 publicly. Tunnel it.
+ssh -L 27017:localhost:27017 user@MONGO_HOST
+
+# Then connect as if local
+mongo --host 127.0.0.1 --port 27017
+# or in app connection string
+mongodb://127.0.0.1:27017/mydb</code></pre>
+        </div>
+        <div class="card">
+          <h3>Through a jump host</h3>
+          <pre><code># One‑off
+ssh -J user@JUMP user@MONGO_HOST -L 27017:localhost:27017
+
+# ~/.ssh/config
+Host jump
+  HostName jump.example.net
+  User user
+
+Host mongo
+  HostName 10.0.2.15
+  User dbadmin
+  ProxyJump jump
+  LocalForward 27017 localhost:27017
+
+# Then
+ssh mongo</code></pre>
+        </div>
+      </div>
+      <p class="note ok"><strong>Tip:</strong> In production, bind mongod to <code>127.0.0.1</code> and let teammates reach it via SSH tunnels or a private VPN.</p>
+    </section>
+
+    <section id="rdbms" class="card">
+      <h2>🗄️ RDBMS via SSH (Postgres / MySQL)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Postgres tunnel</h3>
+          <pre><code># Forward remote 5432 to local 55432 (avoid local conflicts)
+ssh -L 55432:localhost:5432 user@DB_HOST
+
+# psql
+PGPASSWORD=secret psql -h 127.0.0.1 -p 55432 -U dbuser -d appdb
+
+# JDBC
+jdbc:postgresql://127.0.0.1:55432/appdb</code></pre>
+        </div>
+        <div class="card">
+          <h3>MySQL/MariaDB tunnel</h3>
+          <pre><code># Forward remote 3306 to local 33306
+ssh -L 33306:localhost:3306 user@DB_HOST
+
+# CLI
+mysql -h 127.0.0.1 -P 33306 -u dbuser -p</code></pre>
+        </div>
+      </div>
+      <p class="note warn">Avoid <code>0.0.0.0</code> DB binds on public hosts. Use tunnels or a private network (WireGuard/Tailscale).</p>
+    </section>
+
+    <section id="adb" class="card">
+      <h2>🤖 ADB over Network + SSH Tunnels (for Flutter/Android)</h2>
+      <p>Objective: your <em>remote</em> build server should see a <em>phone</em> that’s with you (or elsewhere). We achieve this by <strong>bridging ADB over SSH</strong>. Two main strategies:</p>
+
+      <h3>Strategy A — Phone plugged into your laptop; expose it to the server</h3>
+      <ol>
+        <li>Plug phone into your laptop (USB). Ensure <span class="pill">USB debugging</span> enabled.</li>
+        <li>On your laptop:
+          <pre><code>adb devices                  # verify device visible
+adb tcpip 5555               # make device listen on TCP (LAN)
+# if needed: adb connect PHONE_LAN_IP:5555</code></pre>
+        </li>
+        <li>Create a <strong>reverse tunnel</strong> so the server can reach your phone via your laptop:
+          <pre><code># From your laptop to the server
+ssh -R 5555:localhost:5555 user@SERVER
+
+# On the server
+adb connect localhost:5555
+adb devices                  # should list the device</code></pre>
+        </li>
+        <li>Now build/run on the server against that device:
+          <pre><code># On the server
+dart --version               # sanity check
+flutter devices
+flutter run -d &lt;device_id&gt;</code></pre>
+        </li>
+      </ol>
+      <p class="note warn"><strong>Security:</strong> Never expose 5555 to the public internet. Use SSH reverse tunnels or a private mesh VPN.</p>
+
+      <h3>Strategy B — Phone and server on the same private VPN (easiest)</h3>
+      <ol>
+        <li>Install a mesh VPN (e.g., Tailscale) on <em>phone</em> and <em>server</em>.</li>
+        <li>On the phone, enable <span class="pill">Wireless debugging</span> (Android 11+), note the pairing code/IP.</li>
+        <li>On the server:
+          <pre><code># pair (Android 11+ workflows may vary)
+adb pair PHONE_VPN_IP:PAIR_PORT
+adb connect PHONE_VPN_IP:5555
+flutter run -d &lt;device_id&gt;</code></pre>
+        </li>
+      </ol>
+
+      <div class="diagram">
+        <div class="badge">ADB via SSH (reverse tunnel)</div>
+        <pre class="mermaid">sequenceDiagram
+  participant Phone
+  participant Laptop
+  participant Server
+  Phone->>Laptop: USB / Wi‑Fi ADB 5555
+  Laptop->>Server: ssh -R 5555:localhost:5555
+  Server->>Server: adb connect localhost:5555
+  Server->>Phone: flutter run / install / logcat
+        </pre>
+      </div>
+
+      <p class="note ok"><strong>Tip:</strong> If <code>adb</code> loses connection, re‑run <code>adb tcpip 5555</code> on the laptop side and re‑establish the SSH tunnel.</p>
+    </section>
+
+    <section id="files" class="card">
+      <h2>📦 File Transfer (scp / rsync / sftp)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>scp (simple copy)</h3>
+          <pre><code># local → remote
+scp file.txt user@HOST:/home/user/
+# remote → local
+scp user@HOST:/var/log/syslog ./syslog</code></pre>
+        </div>
+        <div class="card">
+          <h3>rsync (fast, resumable)</h3>
+          <pre><code>rsync -avz -e "ssh -p 22" ./app/ user@HOST:/srv/app/
+# add --delete to mirror (dangerous)</code></pre>
+        </div>
+        <div class="card">
+          <h3>sftp (interactive)</h3>
+          <pre><code>sftp user@HOST
+sftp&gt; put build/app.apk /home/user/apks/
+sftp&gt; get /var/backups/db.dump</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="tips" class="card">
+      <h2>🧠 Pro Tips & Troubleshooting</h2>
+      <ul>
+        <li><strong>tmux</strong> or <strong>screen</strong> on servers to survive disconnects.</li>
+        <li>Use <span class="kbd">-N</span> with tunnels (no remote shell): <code>ssh -N -L ...</code></li>
+        <li>Multiple forwards in one go: <code>ssh -L 8081:localhost:8081 -L 27017:localhost:27017 user@HOST</code></li>
+        <li><strong>Jump hosts:</strong> <code>ssh -J user@JUMP user@TARGET</code></li>
+        <li><strong>Logs:</strong> client add <code>-vvv</code>, server check <code>/var/log/auth.log</code> or <code>journalctl -u ssh</code>.</li>
+        <li><strong>Windows:</strong> Use PowerShell OpenSSH; for GUI, pair with RDP/VNC; for Linux tools, enable WSL.</li>
+        <li><strong>Never</strong> expose DB ports or ADB 5555 publicly. Prefer SSH/VPN.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Built as a practical developer notebook. Tweak, extend, and share with your team.
+    </footer>
+  </main>
+</body>
+</html>
