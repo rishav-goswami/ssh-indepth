@@ -1,49 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SSH Developer Notebook</title>
   <style>
-    :root{
-      --bg:#0b1020; --card:#121936; --ink:#ecf2ff; --muted:#a9b7d9; --accent:#7ee787; --accent2:#80c8ff; --warn:#ffb86b; --danger:#ff6b6b;
+    :root {
+      --bg: #0b1020;
+      --card: #121936;
+      --ink: #ecf2ff;
+      --muted: #a9b7d9;
+      --accent: #7ee787;
+      --accent2: #80c8ff;
+      --warn: #ffb86b;
+      --danger: #ff6b6b;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(180deg,#0b1020,#0a0f1a);color:var(--ink);font-family:var(--sans);}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    header{position:sticky;top:0;background:rgba(11,16,32,.8);backdrop-filter:blur(6px);z-index:9;border-bottom:1px solid #1a234d}
-    .title{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700;padding:14px 0}
-    .title .dot{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #8dffb0, #27ae60)}
-    .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:16px 0}
-    .toc a{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--card);border:1px solid #1d2859;border-radius:12px;color:var(--ink);text-decoration:none}
-    .toc a:hover{outline:2px solid #25337a}
-    h2{margin:26px 0 10px;font-size:22px}
-    h3{margin:18px 0 8px;font-size:18px;color:var(--accent2)}
-    p{color:var(--muted);line-height:1.6}
-    .card{background:var(--card);border:1px solid #1d2859;border-radius:16px;padding:16px;margin:14px 0}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#1d2859;border:1px solid #2c3b84;color:#b4c8ff;font-size:12px}
-    .kbd{font-family:var(--mono);background:#0b122b;border:1px solid #273169;padding:0 6px;border-radius:6px}
-    pre{margin:10px 0;background:#0b122b;border:1px solid #273169;border-radius:12px;padding:12px;overflow:auto;color:#e6f3ff}
-    code{font-family:var(--mono)}
-    .note{border-left:4px solid var(--accent);padding:10px 12px;background:#0e1a34;border-radius:8px}
-    .warn{border-left:4px solid var(--warn);}
-    .ok{border-left:4px solid var(--accent)}
-    .table{width:100%;border-collapse:collapse}
-    .table th,.table td{border:1px solid #24306b;padding:8px 10px}
-    .table th{background:#162152;text-align:left}
-    .pill{padding:2px 8px;border-radius:999px;border:1px solid #2a8f5d;background:#0d2a1e;color:#9af0c3;font-size:12px}
-    .diagram{background:#0b122b;border:1px dashed #355; border-radius:12px;padding:10px}
-    footer{opacity:.7;font-size:12px;margin:40px 0;text-align:center}
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b1020, #0a0f1a);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      background: rgba(11, 16, 32, .8);
+      backdrop-filter: blur(6px);
+      z-index: 9;
+      border-bottom: 1px solid #1a234d;
+      display: block;
+      transition: top 0.3s;
+      width: 100%;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 14px 0
+    }
+
+    .title .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #8dffb0, #27ae60)
+    }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin: 16px 0
+    }
+
+    .toc a {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid #1d2859;
+      border-radius: 12px;
+      color: var(--ink);
+      text-decoration: none
+    }
+
+    .toc a:hover {
+      outline: 2px solid #25337a
+    }
+
+    h2 {
+      margin: 26px 0 10px;
+      font-size: 22px
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 18px;
+      color: var(--accent2)
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid #1d2859;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 14px 0
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #1d2859;
+      border: 1px solid #2c3b84;
+      color: #b4c8ff;
+      font-size: 12px
+    }
+
+    .kbd {
+      font-family: var(--mono);
+      background: #0b122b;
+      border: 1px solid #273169;
+      padding: 0 6px;
+      border-radius: 6px
+    }
+
+    pre {
+      margin: 10px 0;
+      background: #0b122b;
+      border: 1px solid #273169;
+      border-radius: 12px;
+      padding: 12px;
+      overflow: auto;
+      color: #e6f3ff
+    }
+
+    code {
+      font-family: var(--mono)
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: #0e1a34;
+      border-radius: 8px
+    }
+
+    .warn {
+      border-left: 4px solid var(--warn);
+    }
+
+    .ok {
+      border-left: 4px solid var(--accent)
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid #24306b;
+      padding: 8px 10px
+    }
+
+    .table th {
+      background: #162152;
+      text-align: left
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #2a8f5d;
+      background: #0d2a1e;
+      color: #9af0c3;
+      font-size: 12px
+    }
+
+    .diagram {
+      background: #0b122b;
+      border: 1px dashed #355;
+      border-radius: 12px;
+      padding: 10px
+    }
+
+    footer {
+      opacity: .7;
+      font-size: 12px;
+      margin: 40px 0;
+      text-align: center
+    }
   </style>
   <!-- Mermaid for diagrams -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad:true, theme: 'dark' });</script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
 </head>
+
 <body>
-  <header>
+  <header id="navbar">
     <div class="wrap">
       <div class="title"><span class="dot"></span> SSH Developer Notebook — Practical, Colorful, Human‑Readable</div>
       <div class="toc">
@@ -65,7 +231,8 @@
 
     <section id="basics" class="card">
       <h2>🧭 SSH Basics</h2>
-      <p>SSH gives you a secure shell on a remote machine. Think: encrypted pipe ⟶ run commands, tunnel ports, copy files.</p>
+      <p>SSH gives you a secure shell on a remote machine. Think: encrypted pipe ⟶ run commands, tunnel ports, copy
+        files.</p>
       <div class="grid">
         <div class="card">
           <h3>Connect</h3>
@@ -73,7 +240,8 @@
 ssh user@HOST
 ssh -p 2222 user@HOST       # non‑default port
 ssh -i ~/.ssh/id_ed25519 user@HOST   # specify key</code></pre>
-          <p class="note">Use <span class="kbd">-v</span> / <span class="kbd">-vvv</span> for verbose debug when things fail.</p>
+          <p class="note">Use <span class="kbd">-v</span> / <span class="kbd">-vvv</span> for verbose debug when things
+            fail.</p>
         </div>
         <div class="card">
           <h3>Run one command & exit</h3>
@@ -111,7 +279,10 @@ ssh-add $env:USERPROFILE\.ssh\id_ed25519</code></pre>
           <pre><code>ssh-copy-id user@HOST
 # If nonstandard port
 ssh-copy-id -p 2222 user@HOST</code></pre>
-          <p class="note ok"><strong>Tip:</strong> Disable password auth on servers after keys work: edit <code>/etc/ssh/sshd_config</code> → <code>PasswordAuthentication no</code>, then <code>sudo systemctl restart ssh</code>.</p>
+          <p class="note ok"><strong>Tip:</strong> Disable password auth on servers after keys work: edit
+            <code>/etc/ssh/sshd_config</code> → <code>PasswordAuthentication no</code>, then
+            <code>sudo systemctl restart ssh</code>.
+          </p>
         </div>
       </div>
     </section>
@@ -165,12 +336,12 @@ ssh -D 1080 user@SSH_HOST
       <div class="diagram">
         <div class="badge">Flow diagrams (Mermaid)</div>
         <pre class="mermaid">graph LR
-  A[You (localhost)] -- -L 8080:localhost:80 --> S[SSH Host]
+  A[You localhost] -- -L 8080:localhost:80 --> S[SSH Host]
   S -- connects to --> W[(Remote Service :80)]
   A <-- browse http://localhost:8080 --> A
         </pre>
         <pre class="mermaid">graph LR
-  A[You (localhost)] -- -R 9000:localhost:3000 --> S[SSH Host]
+  A[You localhost] -- -R 9000:localhost:3000 --> S[SSH Host]
   S -- listens on :9000 --> S
   S -- forwards to --> A2[(Your Local :3000)]
         </pre>
@@ -180,7 +351,8 @@ ssh -D 1080 user@SSH_HOST
         </pre>
       </div>
 
-      <p class="note warn"><strong>Security:</strong> Prefer tunneling over exposing DBs/IDEs directly to the internet. Restrict binds to <code>localhost</code> unless you truly need others to access.</p>
+      <p class="note warn"><strong>Security:</strong> Prefer tunneling over exposing DBs/IDEs directly to the internet.
+        Restrict binds to <code>localhost</code> unless you truly need others to access.</p>
     </section>
 
     <section id="flutter" class="card">
@@ -201,12 +373,14 @@ http://localhost:8081</code></pre>
         </div>
         <div class="card">
           <h3>VS Code Remote + Hot Reload</h3>
-          <p>Use <span class="pill">VS Code Remote‑SSH</span> to open the server folder, run Flutter commands in an integrated terminal (inside <code>tmux</code>), and forward ports as needed.</p>
+          <p>Use <span class="pill">VS Code Remote‑SSH</span> to open the server folder, run Flutter commands in an
+            integrated terminal (inside <code>tmux</code>), and forward ports as needed.</p>
           <pre><code># Forward common dev ports
 ssh -L 8081:localhost:8081 -L 9100:localhost:9100 user@SERVER</code></pre>
         </div>
       </div>
-      <p class="note">If you need a device (camera, sensors, push notifications), use the ADB network approach to let the server see your phone, or simply build remotely and install/run locally.</p>
+      <p class="note">If you need a device (camera, sensors, push notifications), use the ADB network approach to let
+        the server see your phone, or simply build remotely and install/run locally.</p>
     </section>
 
     <section id="mongodb" class="card">
@@ -242,7 +416,8 @@ Host mongo
 ssh mongo</code></pre>
         </div>
       </div>
-      <p class="note ok"><strong>Tip:</strong> In production, bind mongod to <code>127.0.0.1</code> and let teammates reach it via SSH tunnels or a private VPN.</p>
+      <p class="note ok"><strong>Tip:</strong> In production, bind mongod to <code>127.0.0.1</code> and let teammates
+        reach it via SSH tunnels or a private VPN.</p>
     </section>
 
     <section id="rdbms" class="card">
@@ -268,12 +443,14 @@ ssh -L 33306:localhost:3306 user@DB_HOST
 mysql -h 127.0.0.1 -P 33306 -u dbuser -p</code></pre>
         </div>
       </div>
-      <p class="note warn">Avoid <code>0.0.0.0</code> DB binds on public hosts. Use tunnels or a private network (WireGuard/Tailscale).</p>
+      <p class="note warn">Avoid <code>0.0.0.0</code> DB binds on public hosts. Use tunnels or a private network
+        (WireGuard/Tailscale).</p>
     </section>
 
     <section id="adb" class="card">
       <h2>🤖 ADB over Network + SSH Tunnels (for Flutter/Android)</h2>
-      <p>Objective: your <em>remote</em> build server should see a <em>phone</em> that’s with you (or elsewhere). We achieve this by <strong>bridging ADB over SSH</strong>. Two main strategies:</p>
+      <p>Objective: your <em>remote</em> build server should see a <em>phone</em> that’s with you (or elsewhere). We
+        achieve this by <strong>bridging ADB over SSH</strong>. Two main strategies:</p>
 
       <h3>Strategy A — Phone plugged into your laptop; expose it to the server</h3>
       <ol>
@@ -298,12 +475,14 @@ flutter devices
 flutter run -d &lt;device_id&gt;</code></pre>
         </li>
       </ol>
-      <p class="note warn"><strong>Security:</strong> Never expose 5555 to the public internet. Use SSH reverse tunnels or a private mesh VPN.</p>
+      <p class="note warn"><strong>Security:</strong> Never expose 5555 to the public internet. Use SSH reverse tunnels
+        or a private mesh VPN.</p>
 
       <h3>Strategy B — Phone and server on the same private VPN (easiest)</h3>
       <ol>
         <li>Install a mesh VPN (e.g., Tailscale) on <em>phone</em> and <em>server</em>.</li>
-        <li>On the phone, enable <span class="pill">Wireless debugging</span> (Android 11+), note the pairing code/IP.</li>
+        <li>On the phone, enable <span class="pill">Wireless debugging</span> (Android 11+), note the pairing code/IP.
+        </li>
         <li>On the server:
           <pre><code># pair (Android 11+ workflows may vary)
 adb pair PHONE_VPN_IP:PAIR_PORT
@@ -325,7 +504,8 @@ flutter run -d &lt;device_id&gt;</code></pre>
         </pre>
       </div>
 
-      <p class="note ok"><strong>Tip:</strong> If <code>adb</code> loses connection, re‑run <code>adb tcpip 5555</code> on the laptop side and re‑establish the SSH tunnel.</p>
+      <p class="note ok"><strong>Tip:</strong> If <code>adb</code> loses connection, re‑run <code>adb tcpip 5555</code>
+        on the laptop side and re‑establish the SSH tunnel.</p>
     </section>
 
     <section id="files" class="card">
@@ -359,8 +539,11 @@ sftp&gt; get /var/backups/db.dump</code></pre>
         <li>Use <span class="kbd">-N</span> with tunnels (no remote shell): <code>ssh -N -L ...</code></li>
         <li>Multiple forwards in one go: <code>ssh -L 8081:localhost:8081 -L 27017:localhost:27017 user@HOST</code></li>
         <li><strong>Jump hosts:</strong> <code>ssh -J user@JUMP user@TARGET</code></li>
-        <li><strong>Logs:</strong> client add <code>-vvv</code>, server check <code>/var/log/auth.log</code> or <code>journalctl -u ssh</code>.</li>
-        <li><strong>Windows:</strong> Use PowerShell OpenSSH; for GUI, pair with RDP/VNC; for Linux tools, enable WSL.</li>
+        <li><strong>Logs:</strong> client add <code>-vvv</code>, server check <code>/var/log/auth.log</code> or
+          <code>journalctl -u ssh</code>.
+        </li>
+        <li><strong>Windows:</strong> Use PowerShell OpenSSH; for GUI, pair with RDP/VNC; for Linux tools, enable WSL.
+        </li>
         <li><strong>Never</strong> expose DB ports or ADB 5555 publicly. Prefer SSH/VPN.</li>
       </ul>
     </section>
@@ -370,4 +553,17 @@ sftp&gt; get /var/backups/db.dump</code></pre>
     </footer>
   </main>
 </body>
+<script>
+  var prevScrollpos = window.pageYOffset;
+  window.onscroll = function () {
+    var currentScrollPos = window.pageYOffset;
+    if (prevScrollpos > currentScrollPos) {
+      document.getElementById("navbar").style.top = "0";
+    } else {
+      document.getElementById("navbar").style.top = "-300px";
+    }
+    prevScrollpos = currentScrollPos;
+  }
+</script>
+
 </html>
